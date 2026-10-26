@@ -1,61 +1,43 @@
 name: Build HAPKIDO SCORE APK
 
 on:
-workflow_dispatch:
-push:
-branches: [main]
+  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
-build:
-runs-on: ubuntu-latest
-steps:
-- name: Get source code
-uses: actions/checkout@v4
+  build:
+    runs-on: ubuntu-latest
 
-  - name: Prepare Java
-    uses: actions/setup-java@v4
-    with:
-      distribution: temurin
-      java-version: '17'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  - name: Prepare Android SDK
-    uses: android-actions/setup-android@v3
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
-  - name: Fix project folders
-    run: |
-      mkdir -p app/src/main/java/com/hapkidoscore/app
-      mkdir -p app/src/main/res/values
-      if [ -f MainActivity.kt ]; then mv MainActivity.kt app/src/main/java/com/hapkidoscore/app/; fi
-      if [ -f AndroidManifest.xml ]; then mv AndroidManifest.xml app/src/main/; fi
-      if [ -f styles.xml ]; then mv styles.xml app/src/main/res/values/; fi
-      cat > app/build.gradle.kts <<'EOF'
-      plugins {
-          id("com.android.application")
-          id("org.jetbrains.kotlin.android")
-      }
-      android {
-          namespace = "com.hapkidoscore.app"
-          compileSdk = 35
-          defaultConfig {
-              applicationId = "com.hapkidoscore.app"
-              minSdk = 24
-              targetSdk = 35
-              versionCode = 1
-              versionName = "1.0"
-          }
-      }
-      EOF
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
 
-  - name: Install Gradle
-    uses: gradle/actions/setup-gradle@v4
-    with:
-      gradle-version: '8.9'
+      - name: Check project files
+        run: |
+          echo "Checking Android project..."
+          ls -la
+          echo "Checking Gradle files..."
+          find . -maxdepth 3 -name "*.gradle.kts" -o -name "gradlew"
 
-  - name: Build APK
-    run: gradle assembleDebug
-
-  - name: Save APK
-    uses: actions/upload-artifact@v4
-    with:
-      name: HAPKIDO-SCORE-APK
-      path: app/build/outputs/apk/debug/app-debug.apk
+      - name: Upload project files for inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: HAPKIDO-SCORE-project
+          path: |
+            *.gradle.kts
+            *.properties
+            *.xml
+            *.kt
+            README_FA.md
+          if-no-files-found: warn
